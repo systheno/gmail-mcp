@@ -15,8 +15,8 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
@@ -26,8 +26,8 @@ jobs:
   typing:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: "3.11"
       - run: uv sync --locked --dev
@@ -36,7 +36,7 @@ jobs:
   container:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: docker compose -f deploy/docker-compose.yml config -q
       - run: docker build -f deploy/Dockerfile -t gmail-mcp-gateway:ci .
       - run: docker run --rm --entrypoint gmail-mcp-gateway gmail-mcp-gateway:ci --version
