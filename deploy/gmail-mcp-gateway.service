@@ -1,0 +1,83 @@
+; systemd unit for the Gmail MCP Gateway (Streamable HTTP transport).
+;
+; Install:
+;   sudo useradd --system --home-dir /var/lib/gmail-mcp-gateway --shell /usr/sbin/nologin gmail-mcp
+;   sudo install -m 0644 deploy/gmail-mcp-gateway.service /etc/systemd/system/
+;   sudo systemctl daemon-reload && sudo systemctl enable --now gmail-mcp-gateway
+;
+; Accounts must be authorized once, interactively, as the service user:
+;   sudo -u gmail-mcp GMAIL_MCP_CONFIG_DIR=/etc/gmail-mcp-gateway \
+;        GMAIL_MCP_DATA_DIR=/var/lib/gmail-mcp-gateway \
+;        /opt/gmail-mcp-gateway/.venv/bin/gmail-mcp-gateway accounts add personal --no-browser
+;
+; After that the service runs unattended on the stored refresh token.
+
+[Unit]
+Description=Gmail MCP Gateway (read/organize/draft only; cannot send or delete)
+Documentation=file:/opt/gmail-mcp-gateway/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=gmail-mcp
+Group=gmail-mcp
+WorkingDirectory=/var/lib/gmail-mcp-gateway
+ExecStart=/opt/gmail-mcp-gateway/.venv/bin/gmail-mcp-gateway serve --transport http
+ExecStartPre=/opt/gmail-mcp-gateway/.venv/bin/gmail-mcp-gateway health
+
+Environment=GMAIL_MCP_CONFIG_DIR=/etc/gmail-mcp-gateway
+Environment=GMAIL_MCP_DATA_DIR=/var/lib/gmail-mcp-gateway
+Environment=GMAIL_MCP_SECRETS_DIR=/var/lib/gmail-mcp-gateway/secrets
+Environment=GMAIL_MCP_HTTP_HOST=127.0.0.1
+Environment=GMAIL_MCP_HTTP_PORT=8765
+Environment=GMAIL_MCP_LOG_LEVEL=INFO
+; The master key may be injected instead of living on disk, e.g.:
+; Environment=GMAIL_MCP_MASTER_KEY=<base64 32 bytes>
+; LoadCredentialEncrypted=master-key:/etc/gmail-mcp-gateway/master.key.cred
+
+ConfigurationDirectory=gmail-mcp-gateway
+ConfigurationDirectoryMode=0750
+StateDirectory=gmail-mcp-gateway
+StateDirectoryMode=0700
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=20s
+
+; --- Hardening ------------------------------------------------------------
+; This process holds refresh tokens for real mailboxes. Give it nothing it
+; does not need.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateUsers=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectProc=invisible
+ProcSubset=pid
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete @mount
+CapabilityBoundingSet=
+AmbientCapabilities=
+UMask=0077
+
+; Attachments are written under StateDirectory and are never executed by the
+; gateway. NoExecPaths keeps that true even if something else tries.
+NoExecPaths=/var/lib/gmail-mcp-gateway
+
+[Install]
+WantedBy=multi-user.target

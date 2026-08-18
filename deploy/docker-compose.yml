@@ -1,0 +1,69 @@
+# Gmail MCP Gateway as a standalone service.
+#
+#   docker compose -f deploy/docker-compose.yml up -d
+#
+# One-time setup, before the service is useful:
+#
+#   # 1. Put the OAuth client JSON from the Google Cloud console in the volume
+#   docker compose -f deploy/docker-compose.yml run --rm --entrypoint sh gateway \
+#     -c 'cat > /secrets/oauth_client.json && chmod 600 /secrets/oauth_client.json' \
+#     < ~/Downloads/client_secret_*.json
+#
+#   # 2. Authorize an account. The redirect lands on 127.0.0.1:8899, which is
+#   #    published to your host for the duration of this one command.
+#   docker compose -f deploy/docker-compose.yml run --rm -p 127.0.0.1:8899:8899 \
+#     gateway accounts add personal --no-browser --port 8899
+#
+#   # 3. Mint a token for the MCP client
+#   docker compose -f deploy/docker-compose.yml run --rm gateway token create my-agent
+
+services:
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: gmail-mcp-gateway:latest
+    container_name: gmail-mcp-gateway
+    restart: unless-stopped
+
+    # Published to loopback only. A client elsewhere on the network must come
+    # through an SSH tunnel or a reverse proxy that terminates TLS.
+    ports:
+      - "127.0.0.1:8765:8765"
+
+    volumes:
+      - gateway-config:/config
+      - gateway-data:/data
+      - gateway-secrets:/secrets
+
+    environment:
+      GMAIL_MCP_LOG_LEVEL: INFO
+      # Prefer injecting the master key rather than storing it beside the data:
+      # GMAIL_MCP_MASTER_KEY: ${GMAIL_MCP_MASTER_KEY}
+
+    # The gateway needs no privileges at all.
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    healthcheck:
+      test: ["CMD", "gmail-mcp-gateway", "health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  gateway-config:
+  gateway-data:
+  gateway-secrets:

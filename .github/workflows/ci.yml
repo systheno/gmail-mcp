@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --locked --dev
+      - run: uv run pytest -q
+
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: "3.11"
+      - run: uv sync --locked --dev
+      - run: uv run pyright
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose -f deploy/docker-compose.yml config -q
+      - run: docker build -f deploy/Dockerfile -t gmail-mcp-gateway:ci .
+      - run: docker run --rm --entrypoint gmail-mcp-gateway gmail-mcp-gateway:ci --version
+      - name: Verify image runs as the unprivileged gateway user
+        run: test "$(docker image inspect gmail-mcp-gateway:ci --format '{{.Config.User}}')" = gateway

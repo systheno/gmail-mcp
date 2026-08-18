@@ -1,0 +1,23 @@
+.git
+.venv
+tests
+deploy/docker-compose.yml
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.mypy_cache
+htmlcov
+.coverage
+
+# Defence in depth: these must never enter an image layer.
+.env
+.env.*
+*.cred
+master.key
+oauth_client.json
+gateway_tokens.json
+client_secret*.json
+gateway.db*
+attachments/

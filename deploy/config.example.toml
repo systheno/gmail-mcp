@@ -1,0 +1,51 @@
+# Gmail MCP Gateway configuration.
+#
+# Install to $GMAIL_MCP_CONFIG_DIR/config.toml
+# (default ~/.config/gmail-mcp-gateway/config.toml).
+#
+# Nothing in this file is secret. Credentials live in the secrets directory and
+# are never read from here. Every key below is optional; the defaults shown are
+# what the gateway uses when the key is absent.
+
+log_level = "INFO"          # DEBUG | INFO | WARNING | ERROR | CRITICAL
+audit_retention_days = 90   # 0 disables pruning of the audit log
+
+[limits]
+# Batching and paging
+max_batch_ids      = 100    # message/thread ids accepted per mutation
+max_page_size      = 100    # results per search/list page
+max_total_results  = 500    # hard ceiling on accumulated pagination
+
+# Content budgets
+max_body_chars              = 100000     # body text returned per message
+max_attachment_bytes        = 26214400   # 25 MiB; largest attachment fetched
+max_inline_attachment_bytes = 1048576    # 1 MiB; larger ones go to disk
+max_draft_body_chars        = 200000
+max_recipients              = 100        # per header field on a draft
+
+# Rate limiting. The bucket is per account, and it fails fast with a
+# retry_after_seconds hint rather than queueing.
+rate_per_minute = 240
+rate_burst      = 60
+max_concurrency = 8         # in-flight Gmail requests across the gateway
+
+# Upstream retry policy
+max_attempts            = 5
+backoff_base_seconds    = 0.5
+backoff_max_seconds     = 20.0
+request_timeout_seconds = 30.0
+
+# How long a client_request_id suppresses a duplicate mutation
+idempotency_ttl_seconds = 86400
+
+[http]
+# Only consulted when serving with --transport http.
+enabled = false
+host    = "127.0.0.1"       # non-loopback requires allow_remote_bind below
+port    = 8765
+path    = "/mcp"
+
+# Binding a non-loopback address is refused unless this is true, and an
+# internet-routable address is refused even then. Leave it false and reach the
+# gateway over an SSH tunnel unless you have a trusted private interface.
+allow_remote_bind = false

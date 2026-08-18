@@ -1,0 +1,24 @@
+# Never commit credentials or gateway state.
+.env
+.env.*
+!.env.example
+*.cred
+master.key
+oauth_client.json
+gateway_tokens.json
+client_secret*.json
+gateway.db*
+attachments/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
