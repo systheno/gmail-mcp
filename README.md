@@ -263,6 +263,10 @@ contains no credentials; they live in the `/secrets` volume.
 docker compose -f deploy/docker-compose.yml up -d
 ```
 
+The Compose project name is pinned to `gmail-mcp`, so the same command targets
+the existing gateway container and named volumes regardless of the Compose
+file's directory name.
+
 The one-time authorization sequence — placing the OAuth client, running the
 consent flow with the redirect port published, minting a token — is in the
 compose file's header comments.
