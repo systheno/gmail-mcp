@@ -410,6 +410,12 @@ class GmailService:
                 ErrorCode.INVALID_INPUT, "detail must be one of: ids, metadata, full"
             )
         limit = max(1, min(limit, self.limits.max_page_size))
+        if detail in {"metadata", "full"}:
+            # Gmail's list endpoint returns only ids. Enriching each result needs
+            # a separate upstream call, so bound the fan-out below the default
+            # per-account burst budget. Callers needing a large mailbox scan use
+            # detail="ids" and then fetch selected messages explicitly.
+            limit = min(limit, self.limits.max_metadata_page_size)
 
         gmail_query = validate_search_query(query)
         resolved_labels = (

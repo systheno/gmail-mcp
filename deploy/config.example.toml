@@ -14,6 +14,7 @@ audit_retention_days = 90   # 0 disables pruning of the audit log
 # Batching and paging
 max_batch_ids      = 100    # message/thread ids accepted per mutation
 max_page_size      = 100    # results per search/list page
+max_metadata_page_size = 25 # metadata/full results; each requires a Gmail fetch
 max_total_results  = 500    # hard ceiling on accumulated pagination
 
 # Content budgets

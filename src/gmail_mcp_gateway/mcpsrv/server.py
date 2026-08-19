@@ -306,8 +306,10 @@ def build_server(config: Config, service: GmailService | None = None) -> MCPServ
             Field(
                 default="metadata",
                 description=(
-                    "'ids' returns identifiers only (cheapest), 'metadata' adds "
-                    "headers, labels, and snippet, 'full' also includes message bodies."
+                    "'ids' returns identifiers only (cheapest). 'metadata' adds "
+                    "headers, labels, and snippet; 'full' also includes message bodies. "
+                    "Metadata and full searches have a lower page cap because each result "
+                    "requires a separate Gmail fetch."
                 ),
                 pattern="^(ids|metadata|full)$",
             ),

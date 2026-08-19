@@ -73,6 +73,8 @@ class Limits:
     max_batch_ids: int = 100
     #: Max results per search/list page handed back to a client.
     max_page_size: int = 100
+    #: Max results enriched with per-message Gmail API calls in one search.
+    max_metadata_page_size: int = 25
     #: Hard cap on total items a paginating helper will accumulate.
     max_total_results: int = 500
     #: Characters of body text returned per message before truncation.
@@ -106,6 +108,7 @@ class Limits:
         positive = {
             "max_batch_ids": self.max_batch_ids,
             "max_page_size": self.max_page_size,
+            "max_metadata_page_size": self.max_metadata_page_size,
             "max_total_results": self.max_total_results,
             "max_body_chars": self.max_body_chars,
             "max_attachment_bytes": self.max_attachment_bytes,

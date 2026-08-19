@@ -85,6 +85,21 @@ async def test_search_with_detail_ids_makes_no_per_message_request(service, gmai
     assert not [p for p in gmail.paths() if p.endswith("/messages/msg1")]
 
 
+async def test_metadata_search_caps_fanout_to_preserve_the_rate_limit_budget(service, gmail: FakeGmail):
+    from gmail_mcp_gateway.security.ratelimit import RateLimiter
+
+    for index in range(1, 61):
+        message_id = f"msg{index}"
+        gmail.messages[message_id] = make_message(message_id=message_id, thread_id=f"thr{index}")
+    service._client._limiter = RateLimiter(rate_per_minute=60, burst=30, max_concurrency=8)
+
+    result = await service.search(alias="personal", limit=100, detail="metadata")
+
+    assert result["count"] == 25
+    listing = next(url for url in gmail.request_urls if "/messages?" in url)
+    assert "maxResults=25" in listing
+
+
 async def test_search_with_detail_full_includes_bodies(service):
     result = await service.search(alias="personal", detail="full")
     assert "Here is the report" in result["messages"][0]["body"]["text"]
