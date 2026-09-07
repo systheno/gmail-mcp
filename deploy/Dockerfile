@@ -9,7 +9,7 @@
 # --- build ------------------------------------------------------------------
 # Pin both the Python base and uv version. Application dependencies come from
 # uv.lock, so rebuilding the same commit does not silently pick newer packages.
-FROM ghcr.io/astral-sh/uv:0.12.5@sha256:e85be844203885286c60ffad8a858d48afb6c5a5c237ca0e67f12e74b8f174b1 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.10@sha256:2bb3ebca0a796a155094a27773d290c4b074572e6107f171d88d086682fd2500 AS uv
 FROM python:3.12.14-slim@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a AS build
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
